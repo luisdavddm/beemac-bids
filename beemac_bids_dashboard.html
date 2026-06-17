@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEEMAC BIDS</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0A0C0F;
+  --bg2: #111318;
+  --bg3: #181B21;
+  --bg4: #1E2128;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #F0F2F5;
+  --text2: #8A8F9A;
+  --text3: #555A65;
+  --accent: #00E5A0;
+  --accent2: #00B87D;
+  --accent-dim: rgba(0,229,160,0.10);
+  --red: #FF4D4D;
+  --red-dim: rgba(255,77,77,0.10);
+  --amber: #FFB547;
+  --amber-dim: rgba(255,181,71,0.10);
+  --blue: #4D9FFF;
+  --blue-dim: rgba(77,159,255,0.10);
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --r: 6px;
+  --r2: 10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--font-head);font-size:16px;font-weight:800;letter-spacing:0.08em;display:flex;align-items:center;gap:10px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.header-right{display:flex;align-items:center;gap:16px}
+.shift-badge{font-family:var(--font-mono);font-size:11px;padding:4px 10px;border-radius:var(--r);border:1px solid var(--border2);color:var(--text2);background:var(--bg3)}
+.shift-badge span{color:var(--accent);font-weight:500}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent);font-family:var(--font-mono)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite}
+#clock{font-family:var(--font-mono);font-size:12px;color:var(--text2)}
+.last-updated{font-family:var(--font-mono);font-size:10px;color:var(--text3)}
+
+/* NAV */
+.nav-tabs{display:flex;gap:2px;padding:12px 24px 0;border-bottom:1px solid var(--border);background:var(--bg)}
+.tab{font-family:var(--font-head);font-size:12px;font-weight:600;letter-spacing:0.05em;padding:8px 16px;border-radius:var(--r) var(--r) 0 0;cursor:pointer;color:var(--text3);border:1px solid transparent;border-bottom:none;transition:all 0.15s;background:transparent;text-transform:uppercase}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--accent);background:var(--bg2);border-color:var(--border);border-bottom-color:var(--bg2);margin-bottom:-1px}
+
+/* FILTERS */
+.filters-bar{display:flex;align-items:center;gap:10px;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+.filter-label{font-size:11px;color:var(--text3);font-family:var(--font-mono)}
+select,input[type=date]{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;border-radius:var(--r);outline:none;cursor:pointer}
+select:focus,input[type=date]:focus{border-color:var(--accent)}
+.filter-sep{width:1px;height:20px;background:var(--border2)}
+.btn{font-family:var(--font-head);font-size:11px;font-weight:600;letter-spacing:0.05em;padding:5px 14px;border-radius:var(--r);border:none;cursor:pointer;text-transform:uppercase;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--text2);color:var(--text)}
+
+/* MAIN */
+main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+
+/* METRICS */
+.metrics-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;position:relative;overflow:hidden;transition:border-color 0.2s}
+.metric-card:hover{border-color:var(--border2)}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent-color,transparent)}
+.metric-card.green{--accent-color:var(--accent)}
+.metric-card.red{--accent-color:var(--red)}
+.metric-card.amber{--accent-color:var(--amber)}
+.metric-card.blue{--accent-color:var(--blue)}
+.m-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px}
+.m-value{font-family:var(--font-head);font-size:22px;font-weight:700;line-height:1}
+.m-value.green{color:var(--accent)}
+.m-value.red{color:var(--red)}
+.m-value.amber{color:var(--amber)}
+.m-value.blue{color:var(--blue)}
+.m-sub{font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--font-mono)}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.card-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+.card-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:16px}
+
+/* TABLE */
+.bids-table{width:100%;border-collapse:collapse}
+.bids-table th{font-family:var(--font-mono);font-size:10px;color:var(--text3);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.05em;font-weight:400}
+.bids-table td{font-size:12px;padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+.bids-table tr:last-child td{border-bottom:none}
+.bids-table tr:hover td{background:var(--bg3)}
+.mono{font-family:var(--font-mono);font-size:11px}
+.pill{display:inline-block;font-size:10px;font-family:var(--font-mono);padding:2px 8px;border-radius:3px;font-weight:500;letter-spacing:0.03em}
+.pill-awarded{background:rgba(0,229,160,0.12);color:var(--accent);border:1px solid rgba(0,229,160,0.2)}
+.pill-rejected{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,77,77,0.2)}
+.pill-solo{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,159,255,0.2)}
+.pill-team{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,181,71,0.2)}
+.rate-val{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
+.rate-null{font-family:var(--font-mono);font-size:12px;color:var(--text3)}
+
+/* HOTSPOT ROWS */
+.hs-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.hs-row:last-child{border-bottom:none}
+.hs-lane{font-size:12px;font-weight:500;min-width:100px}
+.hs-bar-bg{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.hs-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease}
+.hs-count{font-family:var(--font-mono);font-size:11px;color:var(--text2);min-width:55px;text-align:right}
+.hs-rate{font-family:var(--font-mono);font-size:11px;color:var(--accent);min-width:65px;text-align:right}
+
+/* LANE LOOKUP */
+.lane-lookup-wrap{display:flex;gap:10px;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap}
+.lane-lookup-wrap label{font-size:10px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:5px}
+.lane-lookup-wrap select{min-width:200px}
+.lane-result-empty{text-align:center;padding:40px;color:var(--text3);font-family:var(--font-mono);font-size:12px}
+
+/* LANE RESULT CARDS */
+.lane-primary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.lane-stat-card{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 20px}
+.lane-stat-card.highlight{border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.05)}
+.lsc-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px}
+.lsc-value{font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--text);line-height:1}
+.lsc-value.green{color:var(--accent)}
+.lsc-value.amber{color:var(--amber)}
+.lsc-value.blue{color:var(--blue)}
+.lsc-sub{font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:6px}
+
+.lane-secondary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.lane-sec-card{background:var(--bg4);border-radius:var(--r);padding:10px 14px}
+.lsec-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.lsec-value{font-family:var(--font-head);font-size:16px;font-weight:700}
+
+.lane-counts{display:flex;gap:12px;padding:12px 16px;background:var(--bg4);border-radius:var(--r);margin-bottom:16px}
+.lane-count-item{display:flex;align-items:center;gap:8px;font-size:12px}
+.lane-count-dot{width:8px;height:8px;border-radius:50%}
+.lane-count-num{font-family:var(--font-head);font-size:16px;font-weight:700;margin-right:2px}
+
+/* PERIOD TABS */
+.period-tabs{display:flex;gap:4px;margin-bottom:16px}
+.period-tab{font-family:var(--font-mono);font-size:10px;padding:4px 10px;border-radius:var(--r);border:1px solid var(--border2);cursor:pointer;color:var(--text3);background:transparent;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.04em}
+.period-tab.active,.period-tab:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+
+/* DIST BARS */
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dist-row:last-child{margin-bottom:0}
+.dist-label{font-size:12px;min-width:80px}
+.dist-bar-bg{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.dist-bar-fill{height:100%;border-radius:3px}
+.dist-pct{font-family:var(--font-mono);font-size:11px;color:var(--text2);min-width:40px;text-align:right}
+
+/* LOADING */
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text3)}
+.spinner{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TABS */
+.tab-content{display:none}
+.tab-content.active{display:flex;flex-direction:column;gap:16px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn 0.3s ease forwards}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>BEEMAC BIDS</div>
+  <div class="header-right">
+    <div class="last-updated" id="last-updated">Loading data...</div>
+    <div class="shift-badge">SHIFT: <span id="current-shift">--</span></div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div id="clock"></div>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <div class="tab active" onclick="switchTab('overview')">Overview</div>
+  <div class="tab" onclick="switchTab('lanes')">Lane Lookup</div>
+  <div class="tab" onclick="switchTab('hotspots')">Hot Spots</div>
+  <div class="tab" onclick="switchTab('bids')">All Bids</div>
+</div>
+
+<main>
+
+  <!-- OVERVIEW -->
+  <div class="tab-content active fade-in" id="tab-overview">
+    <div class="metrics-row">
+      <div class="metric-card blue">
+        <div class="m-label">Total Bids</div>
+        <div class="m-value blue" id="m-total">--</div>
+        <div class="m-sub">in database</div>
+      </div>
+      <div class="metric-card green">
+        <div class="m-label">Awarded</div>
+        <div class="m-value green" id="m-awarded">--</div>
+        <div class="m-sub" id="m-awarded-sub">--</div>
+      </div>
+      <div class="metric-card red">
+        <div class="m-label">Rejected</div>
+        <div class="m-value red" id="m-rejected">--</div>
+        <div class="m-sub" id="m-rejected-sub">--</div>
+      </div>
+      <div class="metric-card amber">
+        <div class="m-label">Win Rate</div>
+        <div class="m-value amber" id="m-winrate">--</div>
+        <div class="m-sub">awarded / placed</div>
+      </div>
+      <div class="metric-card green">
+        <div class="m-label">Avg Awarded Rate</div>
+        <div class="m-value green" style="font-size:18px" id="m-avg-rate">--</div>
+        <div class="m-sub" id="m-avg-rpm">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Avg Rejected Rate</div>
+        <div class="m-value" style="font-size:18px" id="m-avg-rej">--</div>
+        <div class="m-sub" id="m-avg-rej-rpm">--</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <!-- RECENT BIDS -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Recent Bids</div>
+          <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">LATEST 10</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bids-table">
+            <thead><tr><th>Load ID</th><th>Lane</th><th>Mi</th><th>Type</th><th>Rate</th><th>Status</th></tr></thead>
+            <tbody id="recent-bids-body"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DISTRIBUTION -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">Status Distribution</div></div>
+        <div class="card-body">
+          <div id="dist-body"><div style="color:var(--text3);font-family:var(--font-mono);font-size:11px">Loading...</div></div>
+          <div style="border-top:1px solid var(--border);margin:14px 0 12px;padding-top:12px">
+            <div class="card-title" style="margin-bottom:8px">Load Type Split</div>
+            <div id="type-split-body"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP LANES -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Top Lanes</div>
+          <span style="font-size:10px;color:var(--accent);font-family:var(--font-mono)">BY BIDS PLACED</span>
+        </div>
+        <div class="card-body" id="top-lanes-body"><div style="color:var(--text3);font-family:var(--font-mono);font-size:11px">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LANE LOOKUP -->
+  <div class="tab-content fade-in" id="tab-lanes">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Lane Rate Analysis — City to City</div>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">AWARDED + REJECTED ONLY</span>
+      </div>
+      <div class="card-body">
+        <div class="lane-lookup-wrap">
+          <div>
+            <label>Origin City</label>
+            <select id="origin-select"><option value="">Select origin...</option></select>
+          </div>
+          <div style="display:flex;align-items:flex-end;padding-bottom:1px;color:var(--text3);font-size:20px">→</div>
+          <div>
+            <label>Destination City</label>
+            <select id="dest-select" disabled><option value="">Select origin first...</option></select>
+          </div>
+          <div>
+            <label>Time Period</label>
+            <select id="period-select">
+              <option value="all">All Time</option>
+              <option value="6m">Last 6 Months</option>
+              <option value="3m">Last 3 Months</option>
+              <option value="1m" selected>Last Month</option>
+              <option value="1w">Last Week</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="lookupLane()">Search ↗</button>
+          <button class="btn btn-ghost" onclick="clearLane()">Clear</button>
+        </div>
+
+        <div id="lane-result">
+          <div class="lane-result-empty">Select an origin and destination city to analyze a lane.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOT SPOTS -->
+  <div class="tab-content fade-in" id="tab-hotspots">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Hot Spots — State Level</div>
+          <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">BY VOLUME</span>
+        </div>
+        <div class="card-body" id="hs-state-body"><div style="color:var(--text3);font-family:var(--font-mono);font-size:11px">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Hot Spots — City Level</div>
+          <span style="font-size:10px;color:var(--accent);font-family:var(--font-mono)">AVG AWARDED RATE</span>
+        </div>
+        <div class="card-body" id="hs-city-body"><div style="color:var(--text3);font-family:var(--font-mono);font-size:11px">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALL BIDS -->
+  <div class="tab-content fade-in" id="tab-bids">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">All Bids</div>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)" id="bids-count">Loading...</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="bids-table">
+          <thead>
+            <tr>
+              <th>Load ID</th><th>Origin</th><th>Destination</th>
+              <th>Miles</th><th>Type</th><th>Auction Entry</th>
+              <th>Rate Adj.</th><th>Rate/Mi</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="all-bids-body"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ============================================================
+// CONFIG — Google Sheets public CSV URLs
+// ============================================================
+const SHEET_ID = '1dxrqYfqbBMkNul8jc_l7qXIz2NUnbYkFWZEjjZOqABw';
+
+function sheetUrl(gid) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+
+// Tab GIDs — these will be detected automatically
+const TABS = {
+  summary       : null,
+  hotspots_state: null,
+  hotspots_city : null,
+  lane_lookup   : null,
+  cities        : null,
+  all_bids      : null,
+};
+
+// ============================================================
+// DATA STORE
+// ============================================================
+let DATA = {
+  summary: [],
+  hotspots_state: [],
+  hotspots_city: [],
+  lane_lookup: [],
+  cities: [],
+  all_bids: [],
+};
+
+// ============================================================
+// FETCH SHEET BY NAME
+// ============================================================
+async function fetchSheetByName(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    return obj;
+  });
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      result.push(cur.trim()); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function num(v) { return parseFloat(v) || 0; }
+function fmt$(v) { return v ? '$' + num(v).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) : '—'; }
+function fmtRpm(v) { return v ? '$' + num(v).toFixed(2) + '/mi' : '—'; }
+function fmtPct(v) { return v ? num(v).toFixed(1) + '%' : '—'; }
+
+// ============================================================
+// LOAD ALL DATA
+// ============================================================
+async function loadAllData() {
+  try {
+    document.getElementById('last-updated').textContent = 'Loading data...';
+
+    const [summary, hs_state, hs_city, lane_lookup, cities, all_bids] = await Promise.all([
+      fetchSheetByName('Summary'),
+      fetchSheetByName('Hot Spots - State'),
+      fetchSheetByName('Hot Spots - City'),
+      fetchSheetByName('Lane Lookup'),
+      fetchSheetByName('Cities'),
+      fetchSheetByName('All Bids'),
+    ]);
+
+    DATA.summary        = summary;
+    DATA.hotspots_state = hs_state;
+    DATA.hotspots_city  = hs_city;
+    DATA.lane_lookup    = lane_lookup;
+    DATA.cities         = cities;
+    DATA.all_bids       = all_bids;
+
+    document.getElementById('last-updated').textContent =
+      `Updated: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+
+    renderAll();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('last-updated').textContent = 'Error loading data — check sheet permissions';
+  }
+}
+
+function renderAll() {
+  renderOverview();
+  renderHotSpots();
+  renderAllBids();
+  populateCityDropdowns();
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+function renderOverview() {
+  const awarded = DATA.summary.find(r => r.bid_status === 'Awarded') || {};
+  const rejected = DATA.summary.find(r => r.bid_status === 'Rejected') || {};
+
+  const totalAwarded = num(awarded.total);
+  const totalRejected = num(rejected.total);
+  const totalPlaced = totalAwarded + totalRejected;
+  const winRate = totalPlaced > 0 ? (totalAwarded / totalPlaced * 100).toFixed(1) : 0;
+
+  document.getElementById('m-total').textContent = totalPlaced.toLocaleString();
+  document.getElementById('m-awarded').textContent = totalAwarded.toLocaleString();
+  document.getElementById('m-awarded-sub').textContent = `of ${totalPlaced.toLocaleString()} placed`;
+  document.getElementById('m-rejected').textContent = totalRejected.toLocaleString();
+  document.getElementById('m-rejected-sub').textContent = `of ${totalPlaced.toLocaleString()} placed`;
+  document.getElementById('m-winrate').textContent = winRate + '%';
+  document.getElementById('m-avg-rate').textContent = fmt$(awarded.avg_rate);
+  document.getElementById('m-avg-rpm').textContent = fmtRpm(awarded.avg_rate_per_mile);
+  document.getElementById('m-avg-rej').textContent = fmt$(rejected.avg_rate);
+  document.getElementById('m-avg-rej-rpm').textContent = fmtRpm(rejected.avg_rate_per_mile);
+
+  // Distribution
+  const distEl = document.getElementById('dist-body');
+  distEl.innerHTML = `
+    <div class="dist-row">
+      <div class="dist-label" style="color:var(--accent)">Awarded</div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${totalPlaced?Math.round(totalAwarded/totalPlaced*100):0}%;background:var(--accent)"></div></div>
+      <div class="dist-pct">${totalAwarded} <span style="color:var(--text3)">${totalPlaced?Math.round(totalAwarded/totalPlaced*100):0}%</span></div>
+    </div>
+    <div class="dist-row">
+      <div class="dist-label" style="color:var(--red)">Rejected</div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${totalPlaced?Math.round(totalRejected/totalPlaced*100):0}%;background:var(--red)"></div></div>
+      <div class="dist-pct">${totalRejected} <span style="color:var(--text3)">${totalPlaced?Math.round(totalRejected/totalPlaced*100):0}%</span></div>
+    </div>
+  `;
+
+  // Load type split
+  const solo = DATA.all_bids.filter(r => r.load_type === 'SOLO').length;
+  const team = DATA.all_bids.filter(r => r.load_type === 'TEAM').length;
+  const total = solo + team;
+  document.getElementById('type-split-body').innerHTML = `
+    <div class="dist-row">
+      <div class="dist-label" style="color:var(--blue)">SOLO</div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${total?Math.round(solo/total*100):0}%;background:var(--blue)"></div></div>
+      <div class="dist-pct">${solo} <span style="color:var(--text3)">${total?Math.round(solo/total*100):0}%</span></div>
+    </div>
+    <div class="dist-row">
+      <div class="dist-label" style="color:var(--amber)">TEAM</div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${total?Math.round(team/total*100):0}%;background:var(--amber)"></div></div>
+      <div class="dist-pct">${team} <span style="color:var(--text3)">${total?Math.round(team/total*100):0}%</span></div>
+    </div>
+  `;
+
+  // Top lanes
+  const sorted = [...DATA.hotspots_city].sort((a,b) => num(b.bids_placed) - num(a.bids_placed)).slice(0, 8);
+  const max = sorted[0] ? num(sorted[0].bids_placed) : 1;
+  document.getElementById('top-lanes-body').innerHTML = sorted.map(r => `
+    <div class="hs-row">
+      <div class="hs-lane" style="font-size:11px">${r.origin_city}, ${r.origin_state} → ${r.destination_city}, ${r.destination_state}</div>
+      <div class="hs-bar-bg"><div class="hs-bar-fill" style="width:${Math.round(num(r.bids_placed)/max*100)}%;background:var(--accent);opacity:0.6"></div></div>
+      <div class="hs-count">${r.bids_placed} bids</div>
+      <div class="hs-rate">${fmtPct(r.win_rate_pct)}</div>
+    </div>
+  `).join('');
+
+  // Recent bids
+  const recent = DATA.all_bids.slice(0, 10);
+  document.getElementById('recent-bids-body').innerHTML = recent.map(r => `
+    <tr>
+      <td class="mono">${r.load_id}</td>
+      <td>
+        <div style="font-weight:500">${r.origin_state} → ${r.destination_state}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r.origin_city} · ${r.destination_city}</div>
+      </td>
+      <td class="mono">${num(r.miles).toLocaleString()}</td>
+      <td><span class="pill ${r.load_type==='TEAM'?'pill-team':'pill-solo'}">${r.load_type}</span></td>
+      <td>${r.rate_adjustment ? `<span class="rate-val">${fmt$(r.rate_adjustment)}</span>` : '<span class="rate-null">—</span>'}</td>
+      <td>${r.bid_status==='Awarded'?'<span class="pill pill-awarded">AWARDED</span>':'<span class="pill pill-rejected">REJECTED</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// HOT SPOTS
+// ============================================================
+function renderHotSpots() {
+  // State level
+  const stateMax = DATA.hotspots_state[0] ? num(DATA.hotspots_state[0].total_bids) : 1;
+  document.getElementById('hs-state-body').innerHTML = DATA.hotspots_state.slice(0,12).map(r => `
+    <div class="hs-row">
+      <div class="hs-lane">${r.origin_state} → ${r.destination_state}</div>
+      <div class="hs-bar-bg"><div class="hs-bar-fill" style="width:${Math.round(num(r.total_bids)/stateMax*100)}%;background:var(--blue);opacity:0.7"></div></div>
+      <div class="hs-count">${r.total_bids} bids</div>
+      <div class="hs-rate">${fmtPct(r.win_rate_pct)}</div>
+    </div>
+  `).join('');
+
+  // City level — sorted by avg awarded rate
+  const cityByRate = [...DATA.hotspots_city].sort((a,b) => num(b.avg_rate_awarded) - num(a.avg_rate_awarded)).slice(0,12);
+  const cityMax = cityByRate[0] ? num(cityByRate[0].avg_rate_awarded) : 1;
+  document.getElementById('hs-city-body').innerHTML = cityByRate.map(r => `
+    <div class="hs-row">
+      <div class="hs-lane" style="font-size:11px;min-width:160px">${r.origin_city}, ${r.origin_state} → ${r.destination_city}, ${r.destination_state}</div>
+      <div class="hs-bar-bg"><div class="hs-bar-fill" style="width:${Math.round(num(r.avg_rate_awarded)/cityMax*100)}%;background:var(--accent)"></div></div>
+      <div class="hs-rate">${fmt$(r.avg_rate_awarded)}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// ALL BIDS
+// ============================================================
+function renderAllBids() {
+  const bids = DATA.all_bids.slice(0, 200);
+  document.getElementById('bids-count').textContent = `Showing ${bids.length} of ${DATA.all_bids.length} records`;
+  document.getElementById('all-bids-body').innerHTML = bids.map(r => `
+    <tr>
+      <td class="mono">${r.load_id}</td>
+      <td>
+        <div style="font-weight:500">${r.origin_city}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r.origin_state}</div>
+      </td>
+      <td>
+        <div style="font-weight:500">${r.destination_city}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${r.destination_state}</div>
+      </td>
+      <td class="mono">${num(r.miles).toLocaleString()}</td>
+      <td><span class="pill ${r.load_type==='TEAM'?'pill-team':'pill-solo'}">${r.load_type}</span></td>
+      <td class="mono" style="font-size:10px;color:var(--text2)">${r.auction_entry_datetime}</td>
+      <td>${r.rate_adjustment ? `<span class="rate-val">${fmt$(r.rate_adjustment)}</span>` : '<span class="rate-null">—</span>'}</td>
+      <td>${r.rate_per_mile ? `<span class="mono" style="color:var(--text2)">${fmtRpm(r.rate_per_mile)}</span>` : '<span class="rate-null">—</span>'}</td>
+      <td>${r.bid_status==='Awarded'?'<span class="pill pill-awarded">AWARDED</span>':'<span class="pill pill-rejected">REJECTED</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// CITY DROPDOWNS
+// ============================================================
+function populateCityDropdowns() {
+  const cities = [...new Set(DATA.cities.map(r => `${r.city}, ${r.state}`))].sort();
+  const originSel = document.getElementById('origin-select');
+
+  originSel.innerHTML = '<option value="">Select origin city...</option>' +
+    cities.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  resetDestinationDropdown();
+
+  originSel.addEventListener('change', () => updateDestinationOptions(originSel.value));
+}
+
+function resetDestinationDropdown() {
+  const destSel = document.getElementById('dest-select');
+  destSel.innerHTML = '<option value="">Select origin first...</option>';
+  destSel.disabled = true;
+}
+
+function updateDestinationOptions(originVal) {
+  const destSel = document.getElementById('dest-select');
+
+  if (!originVal) {
+    resetDestinationDropdown();
+    return;
+  }
+
+  const [originCity, originState] = originVal.split(', ');
+
+  const destinations = [...new Set(
+    DATA.lane_lookup
+      .filter(r => r.origin_city.trim() === originCity.trim() && r.origin_state.trim() === originState.trim())
+      .map(r => `${r.destination_city}, ${r.destination_state}`)
+  )].sort();
+
+  destSel.disabled = false;
+
+  if (destinations.length === 0) {
+    destSel.innerHTML = '<option value="">No destinations found for this origin</option>';
+    return;
+  }
+
+  destSel.innerHTML = '<option value="">Select destination city...</option>' +
+    destinations.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+// ============================================================
+// LANE LOOKUP
+// ============================================================
+function getPeriodCutoff(period) {
+  const now = new Date();
+  if (period === '1w') { now.setDate(now.getDate() - 7); return now; }
+  if (period === '1m') { now.setMonth(now.getMonth() - 1); return now; }
+  if (period === '3m') { now.setMonth(now.getMonth() - 3); return now; }
+  if (period === '6m') { now.setMonth(now.getMonth() - 6); return now; }
+  return null; // all time
+}
+
+function lookupLane() {
+  const originVal = document.getElementById('origin-select').value;
+  const destVal   = document.getElementById('dest-select').value;
+  const period    = document.getElementById('period-select').value;
+  const resultEl  = document.getElementById('lane-result');
+
+  if (!originVal || !destVal) {
+    resultEl.innerHTML = '<div class="lane-result-empty">Please select both an origin and destination city.</div>';
+    return;
+  }
+
+  const [originCity, originState] = originVal.split(', ');
+  const [destCity, destState]     = destVal.split(', ');
+  const cutoff = getPeriodCutoff(period);
+
+  // Filter lane lookup data
+  let rows = DATA.lane_lookup.filter(r =>
+    r.origin_city.trim() === originCity.trim() &&
+    r.origin_state.trim() === originState.trim() &&
+    r.destination_city.trim() === destCity.trim() &&
+    r.destination_state.trim() === destState.trim()
+  );
+
+  // Apply time filter
+  if (cutoff) {
+    rows = rows.filter(r => {
+      const d = new Date(r.auction_date);
+      return d >= cutoff;
+    });
+  }
+
+  if (rows.length === 0) {
+    resultEl.innerHTML = `
+      <div class="lane-result-empty">
+        No data found for <strong style="color:var(--text2)">${originCity}, ${originState} → ${destCity}, ${destState}</strong>
+        ${cutoff ? ' in the selected time period.' : '.'}
+        <br><br>Try expanding the time period or check another lane.
+      </div>`;
+    return;
+  }
+
+  const awarded  = rows.filter(r => r.bid_status === 'Awarded');
+  const rejected = rows.filter(r => r.bid_status === 'Rejected');
+  const placed   = awarded.length + rejected.length;
+  const winRate  = placed > 0 ? (awarded.length / placed * 100).toFixed(1) : 0;
+
+  const avgRateAwarded  = awarded.length  ? awarded.reduce((s,r)  => s + num(r.rate_adjustment), 0) / awarded.length  : null;
+  const avgRateRejected = rejected.length ? rejected.reduce((s,r) => s + num(r.rate_adjustment), 0) / rejected.length : null;
+  const avgRatePlaced   = placed          ? rows.reduce((s,r)     => s + num(r.rate_adjustment), 0) / placed           : null;
+  const avgRpmAwarded   = awarded.length  ? awarded.reduce((s,r)  => s + num(r.rate_per_mile), 0) / awarded.length    : null;
+  const avgRpmRejected  = rejected.length ? rejected.reduce((s,r) => s + num(r.rate_per_mile), 0) / rejected.length   : null;
+  const avgMiles        = rows.length     ? rows.reduce((s,r)     => s + num(r.miles), 0) / rows.length               : null;
+
+  const periodLabel = {all:'All Time', '6m':'Last 6 Months', '3m':'Last 3 Months', '1m':'Last Month', '1w':'Last Week'}[period];
+
+  resultEl.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-family:var(--font-head);font-size:18px;font-weight:700">${originCity}, ${originState} → ${destCity}, ${destState}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">
+          ${periodLabel} · avg ${avgMiles ? Math.round(avgMiles).toLocaleString() : '—'} miles
+        </div>
+      </div>
+    </div>
+
+    <!-- PRIMARY METRICS -->
+    <div class="lane-primary">
+      <div class="lane-stat-card highlight">
+        <div class="lsc-label">Avg Awarded Rate</div>
+        <div class="lsc-value green">${fmt$(avgRateAwarded)}</div>
+        <div class="lsc-sub">${fmtRpm(avgRpmAwarded)}</div>
+      </div>
+      <div class="lane-stat-card highlight">
+        <div class="lsc-label">Win Rate</div>
+        <div class="lsc-value amber">${winRate}%</div>
+        <div class="lsc-sub">${awarded.length} won of ${placed} placed</div>
+      </div>
+      <div class="lane-stat-card">
+        <div class="lsc-label">Bids Placed</div>
+        <div class="lsc-value blue">${placed}</div>
+        <div class="lsc-sub">${awarded.length} awarded · ${rejected.length} rejected</div>
+      </div>
+    </div>
+
+    <!-- COUNT BAR -->
+    <div class="lane-counts">
+      <div class="lane-count-item">
+        <div class="lane-count-dot" style="background:var(--accent)"></div>
+        <span class="lane-count-num" style="color:var(--accent)">${awarded.length}</span>
+        <span style="color:var(--text3)">Awarded</span>
+      </div>
+      <div class="lane-count-item" style="margin-left:8px">
+        <div class="lane-count-dot" style="background:var(--red)"></div>
+        <span class="lane-count-num" style="color:var(--red)">${rejected.length}</span>
+        <span style="color:var(--text3)">Rejected</span>
+      </div>
+      <div style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text3)">
+        ${placed} total bids placed on this lane
+      </div>
+    </div>
+
+    <!-- SECONDARY METRICS -->
+    <div class="lane-secondary">
+      <div class="lane-sec-card">
+        <div class="lsec-label">Avg Rejected Rate</div>
+        <div class="lsec-value" style="color:var(--red)">${fmt$(avgRateRejected)}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">${fmtRpm(avgRpmRejected)}</div>
+      </div>
+      <div class="lane-sec-card">
+        <div class="lsec-label">Avg Rate Placed</div>
+        <div class="lsec-value">${fmt$(avgRatePlaced)}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">awarded + rejected</div>
+      </div>
+      <div class="lane-sec-card">
+        <div class="lsec-label">Rate Gap</div>
+        <div class="lsec-value" style="color:var(--amber)">
+          ${avgRateAwarded && avgRateRejected ? fmt$(avgRateRejected - avgRateAwarded) : '—'}
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">rejected minus awarded</div>
+      </div>
+      <div class="lane-sec-card">
+        <div class="lsec-label">Avg Miles</div>
+        <div class="lsec-value" style="color:var(--blue)">${avgMiles ? Math.round(avgMiles).toLocaleString() : '—'}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">this lane</div>
+      </div>
+    </div>
+  `;
+}
+
+function clearLane() {
+  document.getElementById('origin-select').value = '';
+  resetDestinationDropdown();
+  document.getElementById('lane-result').innerHTML =
+    '<div class="lane-result-empty">Select an origin and destination city to analyze a lane.</div>';
+}
+
+// ============================================================
+// TABS & CLOCK
+// ============================================================
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['overview','lanes','hotspots','bids'][i] === id));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' CDT';
+  const mins = now.getHours()*60 + now.getMinutes();
+  let shift = 'OVERNIGHT';
+  if (mins >= 451 && mins <= 960)  shift = 'MORNING';
+  else if (mins >= 931 && mins <= 1410) shift = 'EVENING';
+  document.getElementById('current-shift').textContent = shift;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateClock();
+setInterval(updateClock, 1000);
+loadAllData();
+</script>
+</body>
+</html>
