@@ -627,7 +627,7 @@ function renderOverview() {
 
   // Recent bids — sort by real datetime, most recent first
   const recent = [...DATA.all_bids]
-    .sort((a, b) => num(b.auction_entry_sort) - num(a.auction_entry_sort))
+    .sort((a, b) => num(b.load_id) - num(a.load_id))
     .slice(0, 10);
   document.getElementById('recent-bids-body').innerHTML = recent.map(r => `
     <tr>
@@ -679,7 +679,7 @@ let abCurrentPage = 1;
 const AB_PAGE_SIZE = 50;
 
 function renderAllBids() {
-  abFilteredBids = [...DATA.all_bids].sort((a, b) => num(b.auction_entry_sort) - num(a.auction_entry_sort));
+  abFilteredBids = [...DATA.all_bids].sort((a, b) => num(b.load_id) - num(a.load_id));
   abCurrentPage = 1;
   populateAllBidsCityDropdowns();
   abRenderPage();
@@ -730,7 +730,7 @@ function applyBidsFilter() {
     rows = rows.filter(r => num(r.auction_entry_sort) <= toNum);
   }
 
-  abFilteredBids = rows.sort((a, b) => num(b.auction_entry_sort) - num(a.auction_entry_sort));
+  abFilteredBids = rows.sort((a, b) => num(b.load_id) - num(a.load_id));
   abCurrentPage = 1;
   abRenderPage();
 }
