@@ -261,10 +261,28 @@ main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
       <!-- TOP LANES -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Top Lanes</div>
+          <div class="card-title">Top Lanes — Our Bids</div>
           <span style="font-size:10px;color:var(--accent);font-family:var(--font-mono)">BY BIDS PLACED</span>
         </div>
         <div class="card-body" id="top-lanes-body"><div style="color:var(--text3);font-family:var(--font-mono);font-size:11px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- TOP LANES — ALL MARKET (placeholder) -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Top Lanes — All Market</div>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">INCLUDING NOT BIDDED</span>
+      </div>
+      <div class="card-body" style="display:flex;align-items:center;gap:14px;padding:24px">
+        <div style="font-size:22px;opacity:0.4">🔒</div>
+        <div>
+          <div style="font-size:13px;color:var(--text2);font-weight:500;margin-bottom:4px">Coming soon</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);line-height:1.6">
+            This view will show true market volume across every USPS lane — including loads we never bid on.
+            It requires the email parser to capture Not Bidded data, which isn't connected yet.
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -301,6 +319,15 @@ main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
           <button class="btn btn-ghost" onclick="clearLane()">Clear</button>
         </div>
 
+        <div class="lane-lookup-wrap" style="margin-top:-10px;margin-bottom:16px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0">
+            <input type="checkbox" id="exclude-carrier-onhand" onchange="lookupLane()" style="width:14px;height:14px;cursor:pointer">
+            <span style="font-size:11px;color:var(--text2);text-transform:none;font-family:var(--font-body)">
+              Exclude carrier-on-hand bids (rates ending in 7) — show future-bid pricing only
+            </span>
+          </label>
+        </div>
+
         <div id="lane-result">
           <div class="lane-result-empty">Select an origin and destination city to analyze a lane.</div>
         </div>
@@ -331,6 +358,52 @@ main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
   <!-- ALL BIDS -->
   <div class="tab-content fade-in" id="tab-bids">
     <div class="card">
+      <div class="card-head"><div class="card-title">Filter Bids</div></div>
+      <div class="card-body">
+        <div class="lane-lookup-wrap" style="margin-bottom:0">
+          <div>
+            <label>Load ID</label>
+            <input type="text" id="ab-search-id" placeholder="Search by Load ID..." style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;border-radius:var(--r);outline:none;width:160px">
+          </div>
+          <div>
+            <label>Origin City</label>
+            <select id="ab-origin-select" style="min-width:170px"><option value="">All origins</option></select>
+          </div>
+          <div>
+            <label>Destination City</label>
+            <select id="ab-dest-select" style="min-width:170px"><option value="">All destinations</option></select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="ab-status-select">
+              <option value="">All</option>
+              <option value="Awarded">Awarded</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div>
+            <label>Load Type</label>
+            <select id="ab-type-select">
+              <option value="">All</option>
+              <option value="SOLO">Solo</option>
+              <option value="TEAM">Team</option>
+            </select>
+          </div>
+          <div>
+            <label>From Date</label>
+            <input type="date" id="ab-date-from">
+          </div>
+          <div>
+            <label>To Date</label>
+            <input type="date" id="ab-date-to">
+          </div>
+          <button class="btn btn-primary" onclick="applyBidsFilter()">Filter ↗</button>
+          <button class="btn btn-ghost" onclick="resetBidsFilter()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-head">
         <div class="card-title">All Bids</div>
         <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)" id="bids-count">Loading...</span>
@@ -346,6 +419,11 @@ main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
           </thead>
           <tbody id="all-bids-body"><tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
         </table>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:14px;padding:14px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost" onclick="abPrevPage()">← Previous</button>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text2)" id="ab-page-label">Page 1</span>
+        <button class="btn btn-ghost" onclick="abNextPage()">Next →</button>
       </div>
     </div>
   </div>
@@ -428,6 +506,17 @@ function num(v) { return parseFloat(v) || 0; }
 function fmt$(v) { return v ? '$' + num(v).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) : '—'; }
 function fmtRpm(v) { return v ? '$' + num(v).toFixed(2) + '/mi' : '—'; }
 function fmtPct(v) { return v ? num(v).toFixed(1) + '%' : '—'; }
+
+// Carrier-on-hand detection: whole dollar amount ending in 7, no cents.
+// Bids with cents are always treated as "future" bids.
+function isCarrierOnHand(rateStr) {
+  const rate = num(rateStr);
+  if (!rate) return false;
+  const cents = Math.round((rate % 1) * 100);
+  if (cents !== 0) return false; // has cents -> future
+  const wholeDollars = Math.round(rate);
+  return (wholeDollars % 10) === 7;
+}
 
 // ============================================================
 // LOAD ALL DATA
@@ -536,8 +625,10 @@ function renderOverview() {
     </div>
   `).join('');
 
-  // Recent bids
-  const recent = DATA.all_bids.slice(0, 10);
+  // Recent bids — sort by real datetime, most recent first
+  const recent = [...DATA.all_bids]
+    .sort((a, b) => new Date(b.auction_entry_iso) - new Date(a.auction_entry_iso))
+    .slice(0, 10);
   document.getElementById('recent-bids-body').innerHTML = recent.map(r => `
     <tr>
       <td class="mono">${r.load_id}</td>
@@ -581,12 +672,98 @@ function renderHotSpots() {
 }
 
 // ============================================================
-// ALL BIDS
+// ALL BIDS — filters, search, pagination
 // ============================================================
+let abFilteredBids = [];
+let abCurrentPage = 1;
+const AB_PAGE_SIZE = 50;
+
 function renderAllBids() {
-  const bids = DATA.all_bids.slice(0, 200);
-  document.getElementById('bids-count').textContent = `Showing ${bids.length} of ${DATA.all_bids.length} records`;
-  document.getElementById('all-bids-body').innerHTML = bids.map(r => `
+  abFilteredBids = [...DATA.all_bids].sort((a, b) =>
+    new Date(b.auction_entry_iso) - new Date(a.auction_entry_iso));
+  abCurrentPage = 1;
+  populateAllBidsCityDropdowns();
+  abRenderPage();
+}
+
+function populateAllBidsCityDropdowns() {
+  const cities = [...new Set(DATA.cities.map(r => `${r.city}, ${r.state}`))].sort();
+  const originSel = document.getElementById('ab-origin-select');
+  const destSel    = document.getElementById('ab-dest-select');
+  originSel.innerHTML = '<option value="">All origins</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
+  destSel.innerHTML   = '<option value="">All destinations</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function applyBidsFilter() {
+  const searchId = document.getElementById('ab-search-id').value.trim();
+  const origin   = document.getElementById('ab-origin-select').value;
+  const dest     = document.getElementById('ab-dest-select').value;
+  const status   = document.getElementById('ab-status-select').value;
+  const type     = document.getElementById('ab-type-select').value;
+  const dateFrom = document.getElementById('ab-date-from').value;
+  const dateTo   = document.getElementById('ab-date-to').value;
+
+  let rows = [...DATA.all_bids];
+
+  if (searchId) {
+    rows = rows.filter(r => r.load_id.includes(searchId));
+  }
+  if (origin) {
+    const [oc, os] = origin.split(', ');
+    rows = rows.filter(r => r.origin_city.trim() === oc.trim() && r.origin_state.trim() === os.trim());
+  }
+  if (dest) {
+    const [dc, ds] = dest.split(', ');
+    rows = rows.filter(r => r.destination_city.trim() === dc.trim() && r.destination_state.trim() === ds.trim());
+  }
+  if (status) {
+    rows = rows.filter(r => r.bid_status === status);
+  }
+  if (type) {
+    rows = rows.filter(r => r.load_type === type);
+  }
+  if (dateFrom) {
+    const from = new Date(dateFrom + 'T00:00:00');
+    rows = rows.filter(r => new Date(r.auction_entry_iso) >= from);
+  }
+  if (dateTo) {
+    const to = new Date(dateTo + 'T23:59:59');
+    rows = rows.filter(r => new Date(r.auction_entry_iso) <= to);
+  }
+
+  abFilteredBids = rows.sort((a, b) => new Date(b.auction_entry_iso) - new Date(a.auction_entry_iso));
+  abCurrentPage = 1;
+  abRenderPage();
+}
+
+function resetBidsFilter() {
+  document.getElementById('ab-search-id').value = '';
+  document.getElementById('ab-origin-select').value = '';
+  document.getElementById('ab-dest-select').value = '';
+  document.getElementById('ab-status-select').value = '';
+  document.getElementById('ab-type-select').value = '';
+  document.getElementById('ab-date-from').value = '';
+  document.getElementById('ab-date-to').value = '';
+  renderAllBids();
+}
+
+function abRenderPage() {
+  const totalPages = Math.max(1, Math.ceil(abFilteredBids.length / AB_PAGE_SIZE));
+  if (abCurrentPage > totalPages) abCurrentPage = totalPages;
+  const start = (abCurrentPage - 1) * AB_PAGE_SIZE;
+  const pageRows = abFilteredBids.slice(start, start + AB_PAGE_SIZE);
+
+  document.getElementById('bids-count').textContent =
+    `Showing ${pageRows.length ? start+1 : 0}-${start + pageRows.length} of ${abFilteredBids.length} records`;
+  document.getElementById('ab-page-label').textContent = `Page ${abCurrentPage} of ${totalPages}`;
+
+  if (pageRows.length === 0) {
+    document.getElementById('all-bids-body').innerHTML =
+      '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">No bids match these filters.</td></tr>';
+    return;
+  }
+
+  document.getElementById('all-bids-body').innerHTML = pageRows.map(r => `
     <tr>
       <td class="mono">${r.load_id}</td>
       <td>
@@ -605,6 +782,15 @@ function renderAllBids() {
       <td>${r.bid_status==='Awarded'?'<span class="pill pill-awarded">AWARDED</span>':'<span class="pill pill-rejected">REJECTED</span>'}</td>
     </tr>
   `).join('');
+}
+
+function abNextPage() {
+  const totalPages = Math.max(1, Math.ceil(abFilteredBids.length / AB_PAGE_SIZE));
+  if (abCurrentPage < totalPages) { abCurrentPage++; abRenderPage(); }
+}
+
+function abPrevPage() {
+  if (abCurrentPage > 1) { abCurrentPage--; abRenderPage(); }
 }
 
 // ============================================================
@@ -671,6 +857,7 @@ function lookupLane() {
   const originVal = document.getElementById('origin-select').value;
   const destVal   = document.getElementById('dest-select').value;
   const period    = document.getElementById('period-select').value;
+  const excludeCOH = document.getElementById('exclude-carrier-onhand').checked;
   const resultEl  = document.getElementById('lane-result');
 
   if (!originVal || !destVal) {
@@ -698,12 +885,21 @@ function lookupLane() {
     });
   }
 
+  // Apply carrier-on-hand exclusion
+  let excludedCount = 0;
+  if (excludeCOH) {
+    const before = rows.length;
+    rows = rows.filter(r => !isCarrierOnHand(r.rate_adjustment));
+    excludedCount = before - rows.length;
+  }
+
   if (rows.length === 0) {
     resultEl.innerHTML = `
       <div class="lane-result-empty">
         No data found for <strong style="color:var(--text2)">${originCity}, ${originState} → ${destCity}, ${destState}</strong>
         ${cutoff ? ' in the selected time period.' : '.'}
-        <br><br>Try expanding the time period or check another lane.
+        ${excludeCOH ? ' (carrier-on-hand bids excluded)' : ''}
+        <br><br>Try expanding the time period, clearing the carrier-on-hand filter, or check another lane.
       </div>`;
     return;
   }
@@ -722,8 +918,19 @@ function lookupLane() {
 
   const periodLabel = {all:'All Time', '6m':'Last 6 Months', '3m':'Last 3 Months', '1m':'Last Month', '1w':'Last Week'}[period];
 
+  const biasWarning = placed < 5 ? `
+    <div style="display:flex;align-items:center;gap:8px;background:var(--amber-dim);border:1px solid rgba(255,181,71,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--amber)">
+      <span style="font-size:14px">⚠</span>
+      <span>Small sample size (${placed} bid${placed===1?'':'s'} placed) — these numbers are based only on our own USPS bids and may not represent the true market rate for this lane.</span>
+    </div>` : '';
+
+  const cohNote = excludeCOH ? `
+    <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:12px">
+      Carrier-on-hand bids excluded${excludedCount ? ` (${excludedCount} removed)` : ''} — showing future-bid pricing only
+    </div>` : '';
+
   resultEl.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div>
         <div style="font-family:var(--font-head);font-size:18px;font-weight:700">${originCity}, ${originState} → ${destCity}, ${destState}</div>
         <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">
@@ -731,6 +938,9 @@ function lookupLane() {
         </div>
       </div>
     </div>
+
+    ${biasWarning}
+    ${cohNote}
 
     <!-- PRIMARY METRICS -->
     <div class="lane-primary">
